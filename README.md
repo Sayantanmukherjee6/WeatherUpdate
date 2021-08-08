@@ -4,7 +4,7 @@
 * Java 8
 * Scala 2.13.6
 
-## Application Configuration
+## Application configuration
 Go to `src/main/resources/application.conf` and add the api key
 ```json
 api-details {
