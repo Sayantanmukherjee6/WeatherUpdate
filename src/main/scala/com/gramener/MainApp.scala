@@ -17,6 +17,7 @@ object MainApp {
 
   implicit val actorSystem = ActorSystem(Behaviors.empty, "weather-update")
   implicit val executionContext: ExecutionContextExecutor = actorSystem.executionContext
+  val config = ConfigFactory.load()
 
   def isEmpty(x: String): Boolean = x == null || x.trim.isEmpty
 
@@ -31,29 +32,30 @@ object MainApp {
     entityFuture.map(e => Some(e.main.temp,e.main.pressure,e.weather(0).main))
   }
 
-  def main(args: Array[String]): Unit = {
-    val config = ConfigFactory.load()
-    val route =
-      path("current") {
-        get {
-          parameters(Symbol("location").as[String]) {
-            case str if isEmpty(str) | str.last == ',' | str.split(',').length > 2 =>
-              complete(InValidReq(msg = StatusCodes.Forbidden.toString()))
-            case str =>
-              val f: Future[Option[(Double, Double, String)]] =
-                fetchWeatherDetails(str, config.getString("api-details.api_key"))
+  val route =
+    path("current") {
+      get {
+        parameters(Symbol("location").as[String]) {
+          case str if isEmpty(str) | str.last == ',' | str.split(',').length > 2 =>
+            complete(InValidReq(msg = StatusCodes.Forbidden.toString()))
+          case str =>
+            val f: Future[Option[(Double, Double, String)]] =
+              fetchWeatherDetails(str, config.getString("api-details.api_key"))
 
-              onSuccess(f) {
-                case Some(item) => complete(FinalResp(temp = item._1,
-                  pressure = item._2,
-                  umbrella = item._3 match {
-                    case "Rain" | "Drizzle" | "Thunderstorm" => true
-                    case _ => false
-                  }))
-              }
-          }
+            onSuccess(f) {
+              case Some(item) => complete(FinalResp(temp = item._1,
+                pressure = item._2,
+                umbrella = item._3 match {
+                  case "Rain" | "Drizzle" | "Thunderstorm" => true
+                  case _ => false
+                }))
+            }
         }
       }
+    }
+
+  def main(args: Array[String]): Unit = {
+
     val bindingFuture = Http().newServerAt(
       config.getString("server-config.host"),
       config.getString("server-config.port").toInt
