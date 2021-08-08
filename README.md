@@ -11,6 +11,17 @@ api-details {
     api_key: ""
 }
 ```
+## API routes
+
+```json
+api request: curl http://localhost:8080/current?location=Berlin
+api response: {
+                "pressure": 999.0,
+                "temp": 19.38,
+                "umbrella": false
+              }
+```
+
 ## Test application in terminal
 * sbt test
 
