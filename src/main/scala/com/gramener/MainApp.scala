@@ -28,8 +28,14 @@ object MainApp {
       ))
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(RequestBuilding.Get(uri))
-    val entityFuture:Future[ApiResponse] = responseFuture.flatMap(resp => Unmarshal(resp.entity).to[ApiResponse])
-    entityFuture.map(e => Some(e.main.temp,e.main.pressure,e.weather(0).main))
+    val entityFuture:Future[Any] =
+      responseFuture.flatMap(resp => Unmarshal(resp.entity).to[ApiResponse]).fallbackTo{
+        responseFuture.flatMap(resp => Unmarshal(resp.entity).to[String])
+      }
+    entityFuture.map{
+      case s: String => Some(0.toDouble,0.toDouble,"error")
+      case e:ApiResponse =>   Some(e.main.temp,e.main.pressure,e.weather(0).main)
+    }
   }
 
   val route =
@@ -43,6 +49,7 @@ object MainApp {
               fetchWeatherDetails(str, config.getString("api-details.api_key"))
 
             onSuccess(f) {
+              case Some(item) if (item._3 == "error")  => complete(InValidReq(msg = StatusCodes.BadRequest.toString()))
               case Some(item) => complete(FinalResp(temp = item._1,
                 pressure = item._2,
                 umbrella = item._3 match {

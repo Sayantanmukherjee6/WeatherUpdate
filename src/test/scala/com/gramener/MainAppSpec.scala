@@ -19,7 +19,6 @@ class MainAppSpec extends AnyWordSpec with Matchers with ScalatestRouteTest {
 
   "A Router" should {
     "return a incomplete get request with valid msg in json" in {
-      //val request = HttpRequest(uri = "/current?location=Berlin,")
       Get("/current?location=Mumbai,") ~> route ~> check {
         contentType should ===(ContentTypes.`application/json`)
         entityAs[String] should ===("""{"msg":"403 Forbidden"}""")
@@ -28,14 +27,11 @@ class MainAppSpec extends AnyWordSpec with Matchers with ScalatestRouteTest {
   }
 
   "A Router" should {
-    "return a invalid get request in string" in {
-      //val request = HttpRequest(uri = "/current?location=Ber")
+    "return a invalid get request in json" in {
       Get("/current?location=M") ~> route ~> check {
-        contentType should ===(ContentTypes.`text/plain(UTF-8)`)
-        entityAs[String] shouldEqual "There was an internal server error."
+        contentType should ===(ContentTypes.`application/json`)
+        entityAs[String] should ===("""{"msg":"400 Bad Request"}""")
       }
     }
   }
-
-
 }
