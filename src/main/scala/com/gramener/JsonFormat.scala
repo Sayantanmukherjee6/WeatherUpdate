@@ -5,11 +5,12 @@ import spray.json.DefaultJsonProtocol
 
 object JsonFormat {
 
+  trait ReqReturnType
   case class MainState(temp:Double,feels_like:Double,temp_min:Double,temp_max:Double,pressure:Double,humidity:Double)
   case class WeatherState(id: Long, main: String, description: String, icon: String)
-  case class ApiResponse(weather:List[WeatherState], main:MainState)
+  case class ApiResponse(weather:List[WeatherState], main:MainState) extends ReqReturnType
+  case class InvalidResp() extends ReqReturnType
 
-  case class InvalidResp(cod:Int,message:String)
   case class InValidReq(msg:String)
   case class FinalResp(temp:Double,pressure:Double,umbrella:Boolean)
 
@@ -18,7 +19,7 @@ object JsonFormat {
     implicit val weatherState = jsonFormat4(WeatherState)
     implicit val apiResponse = jsonFormat2(ApiResponse)
 
-    implicit val invalidResp = jsonFormat2(InvalidResp)
+    implicit val invalidResp = jsonFormat0(InvalidResp)
     implicit val invalidReqFormat = jsonFormat1(InValidReq)
     implicit val finalResp = jsonFormat3(FinalResp)
   }
