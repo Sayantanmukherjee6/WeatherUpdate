@@ -34,4 +34,23 @@ class MainAppSpec extends AnyWordSpec with Matchers with ScalatestRouteTest {
       }
     }
   }
+
+  "A Router" should {
+    "return a exception for get request with incorrect parameter in json" in {
+      Get("/current?locat") ~> route ~> check {
+        contentType should ===(ContentTypes.`application/json`)
+        entityAs[String] should ===("""{"msg":"406 Not Acceptable"}""")
+      }
+    }
+  }
+
+  "A Router" should {
+    "return a exception for get request with incorrect handler in json" in {
+      Get("/incorrect") ~> route ~> check {
+        contentType should ===(ContentTypes.`application/json`)
+        entityAs[String] should ===("""{"msg":"404 Not Found"}""")
+      }
+    }
+  }
+
 }

@@ -7,9 +7,11 @@ import akka.http.scaladsl.client.RequestBuilding
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import com.gramener.CustomRejectionHandler.myRejectionHandler
 import com.gramener.JsonFormat.{ApiResponse, FinalResp, InValidReq, InvalidResp, ReqReturnType}
 import com.gramener.JsonFormat.WeatherFormat._
 import com.typesafe.config.ConfigFactory
+
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -31,12 +33,12 @@ object MainApp {
         responseFuture.flatMap(resp => Unmarshal(resp.entity).to[InvalidResp])
       }
     entityFuture.map{
-      case s: InvalidResp => Some(0.toDouble,0.toDouble,"error")
+      case s:InvalidResp => Some(0.toDouble,0.toDouble,"error")
       case e:ApiResponse =>   Some(e.main.temp,e.main.pressure,e.weather(0).main)
     }
   }
 
-  val route =
+  val route = handleRejections(myRejectionHandler) {
     path("current") {
       get {
         parameters(Symbol("location").as[String]) {
@@ -47,7 +49,7 @@ object MainApp {
               fetchWeatherDetails(str, config.getString("api-details.api_key"))
 
             onSuccess(f) {
-              case Some(item) if (item._3 == "error")  => complete(InValidReq(msg = StatusCodes.BadRequest.toString()))
+              case Some(item) if (item._3 == "error") => complete(InValidReq(msg = StatusCodes.BadRequest.toString()))
               case Some(item) => complete(FinalResp(temp = item._1,
                 pressure = item._2,
                 umbrella = item._3 match {
@@ -58,7 +60,7 @@ object MainApp {
         }
       }
     }
-
+  }
   def main(args: Array[String]): Unit = {
 
     val bindingFuture = Http().newServerAt(
